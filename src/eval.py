@@ -9,7 +9,7 @@ pp = pprint.PrettyPrinter(indent=2, width=60)
 
 
 def plusBuiltin(current_scope, args):
-    vals = [eval(current_scope, v) for v in args]
+    vals = [eval_literal(current_scope, v) for v in args]
     if 'FLOAT' in [v['type'] for v in args]:
         return get_syn('FLOAT', sum(vals))
     else:
@@ -23,7 +23,7 @@ def difference(vals):
 
 
 def minusBuiltin(current_scope, args):
-    vals = [eval(current_scope, v) for v in args]
+    vals = [eval_literal(current_scope, v) for v in args]
     if 'FLOAT' in [v['type'] for v in args]:
         return get_syn('FLOAT', difference(vals))
     else:
@@ -37,7 +37,7 @@ def product(vals):
 
 
 def timesBuiltin(current_scope, args):
-    vals = [eval(current_scope, v) for v in args]
+    vals = [eval_literal(current_scope, v) for v in args]
     if 'FLOAT' in [v['type'] for v in args]:
         return get_syn('FLOAT', product(vals))
     else:
@@ -57,7 +57,7 @@ def quotientI(vals):
 
 
 def divideBuiltin(current_scope, args):
-    vals = [eval(current_scope, v) for v in args]
+    vals = [eval_literal(current_scope, v) for v in args]
     if 'FLOAT' in [v['type'] for v in args]:
         return get_syn('FLOAT', quotientF(vals))
     else:
@@ -68,56 +68,56 @@ def modBuiltin(current_scope, args):
 	if len(args) != 2:
 		#TODO ERROR HANDLING
 		return None
-	return get_syn('INT', eval(current_scope, args[0]) % eval(current_scope, args[1]))
+	return get_syn('INT', eval_literal(current_scope, args[0]) % eval_literal(current_scope, args[1]))
 
 
 def notBuiltin(current_scope, args):
 	if len(args) != 1:
 		#TODO ERROR HANDLING
 		pass
-	return get_syn('BOOL', not eval(current_scope, args[0]))
+	return get_syn('BOOL', not eval_literal(current_scope, args[0]))
 
 
 def ltBuiltin(current_scope, args):
     if len(args) != 2:
         #TODO ERROR HANDLING
         return None
-    return get_syn('BOOL', eval(current_scope, args[0]) < eval(current_scope, args[1]))
+    return get_syn('BOOL', eval_literal(current_scope, args[0]) < eval_literal(current_scope, args[1]))
 
 
 def lteBuiltin(current_scope, args):
     if len(args) != 2:
         #TODO ERROR HANDLING
         return None
-    return get_syn('BOOL', eval(current_scope, args[0]) <= eval(current_scope, args[1]))
+    return get_syn('BOOL', eval_literal(current_scope, args[0]) <= eval_literal(current_scope, args[1]))
 
 
 def gtBuiltin(current_scope, args):
     if len(args) != 2:
         #TODO ERROR HANDLING
         return None
-    return get_syn('BOOL', eval(current_scope, args[0]) > eval(current_scope, args[1]))
+    return get_syn('BOOL', eval_literal(current_scope, args[0]) > eval_literal(current_scope, args[1]))
 
 
 def gteBuiltin(current_scope, args):
     if len(args) != 2:
         #TODO ERROR HANDLING
         return None
-    return get_syn('BOOL', eval(current_scope, args[0]) >= eval(current_scope, args[1]))
+    return get_syn('BOOL', eval_literal(current_scope, args[0]) >= eval_literal(current_scope, args[1]))
 
 
 def equalsBuiltin(current_scope, args):
     if len(args) != 2:
         #TODO ERROR HANDLING
         return None
-    return get_syn('BOOL', eval(current_scope, args[0]) == eval(current_scope, args[1]))
+    return get_syn('BOOL', eval_literal(current_scope, args[0]) == eval_literal(current_scope, args[1]))
 
 
 def notEqualBuiltin(current_scope, args):
     if len(args) != 2:
         #TODO ERROR HANDLING
         return None
-    return get_syn('BOOL', eval(current_scope, args[0]) != eval(current_scope, args[1]))
+    return get_syn('BOOL', eval_literal(current_scope, args[0]) != eval_literal(current_scope, args[1]))
 
 
 def andBuiltin(current_scope, args):
@@ -125,7 +125,7 @@ def andBuiltin(current_scope, args):
         #TODO ERROR HANDLING
         #TODO NEED TO ONLY COMPARE BOOLS
         return None
-    return get_syn('BOOL', eval(current_scope, args[0]) and eval(current_scope, args[1]))
+    return get_syn('BOOL', eval_literal(current_scope, args[0]) and eval_literal(current_scope, args[1]))
 
 
 def orBuiltin(current_scope, args):
@@ -133,7 +133,28 @@ def orBuiltin(current_scope, args):
         #TODO ERROR HANDLING
         #TODO NEED TO ONLY COMPARE BOOLS
         return None
-    return get_syn('BOOL', eval(current_scope, args[0]) or eval(current_scope, args[1]))
+    return get_syn('BOOL', eval_literal(current_scope, args[0]) or eval_literal(current_scope, args[1]))
+
+def carBuiltin(current_scope, args):
+    if len(args) > 1:
+        #TODO ERROR HANDLING
+        return None
+    return args[0]['value'][0]
+
+def cdrBuiltin(current_scope, args):
+    if len(args) > 1:
+        #TODO ERROR HANDLING
+        return None
+    return get_syn('LIST', [x for x in args[0]['value'][1:]])
+
+def consBuiltin(current_scope, args):
+    if len(args) != 2:
+        #TODO ERROR HANDLING
+        return None
+    l = [x for x in args[1]['value']]
+    l.insert(0, args[0])
+    return get_syn('LIST', l)
+
 
 import copy
 
@@ -151,13 +172,41 @@ class User_func:
             eval(new_scope, e)
         return eval(new_scope, self._body[-1])
 
+def print_lispy(scope, lispy):
+    if lispy['type'] not in ['INT', 'FLOAT', 'BOOL', 'STRING', 'LIST']:
+        e = eval(scope, lispy)
+        print_lispy(scope, e)
+    if lispy['type'] in ['INT', 'FLOAT']:
+        print(eval_literal(scope, lispy))
+    if lispy['type'] == 'BOOL':
+        b = eval_literal(scope, lispy)
+        if b:
+            print('#t')
+        else:
+            print('#f')
+    if lispy['type'] == 'STRING':
+        s = eval_literal(scope, lispy)
+        print('"' + s + '"')
+    if lispy['type'] == 'LIST':
+        print("'(", end='')
+        lis = eval_literal(scope, lispy)
+        for l in lis[:-1]:
+            print(eval_literal(scope, l), end=' ')
+        print(str(eval_literal(scope, lis[-1])) + ')')
+
+
+def eval_literal(current_scope, ast):
+    if ast['type'] in ['INT', 'FLOAT', 'STRING', 'BOOL', 'LIST']:
+        return ast['value']
+    else:
+        return None
 
 
 
 def eval(current_scope, ast):
     ast = copy.deepcopy(ast)
-    if ast['type'] in ['INT', 'FLOAT', 'STRING', 'BOOL']:
-        return ast['value']
+    if ast['type'] in ['INT', 'FLOAT', 'STRING', 'BOOL', 'LIST']:
+        return ast
 
     if ast['type'] == 'ID':
         #return current_scope.get(ast['value'])
@@ -198,9 +247,7 @@ def eval(current_scope, ast):
 
     if ast['type'] == 'PRINT':
         for val in ast['value']['value']:
-            while type(val) is dict:
-                val = eval(current_scope, val)
-            print(val)
+            print_lispy(current_scope, val)
 
     if ast['type'] == 'FUNC_CALL':
         args = ast['value']['arg_exprs']['value']
@@ -225,11 +272,14 @@ global_scope = {
     '!=': notEqualBuiltin,
     'and': andBuiltin,
     'or': orBuiltin,
-    'not': notBuiltin
+    'not': notBuiltin,
+    'car': carBuiltin,
+    'cdr': cdrBuiltin,
+    'cons': consBuiltin
 }
 
 if __name__ == '__main__':
     lispy = lispy_parser()
     while(True):
         ast = lispy.parse(input())
-        print(eval(global_scope, ast))
+        pp.pprint(eval(global_scope, ast))

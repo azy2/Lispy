@@ -1,7 +1,7 @@
 import rlcompleter
 import readline
 from parser import lispy_parser
-from eval import global_scope, eval
+from eval import global_scope, eval, eval_literal, print_lispy
 import sys
 
 if len(sys.argv) == 1:
@@ -19,7 +19,7 @@ if len(sys.argv) == 1:
             if ast:
                 e = eval(global_scope, ast)
                 if e is not None:
-                    print(eval(global_scope, ast))
+                    print_lispy(global_scope, e)
 
 else:
     lispy = lispy_parser()
@@ -27,7 +27,7 @@ else:
     file_name = sys.argv[1]
     f = open(file_name, 'r')
     code = f.read()
-    code = '(' + code + ')'
+    code = "'(" + code + ')'
     code = lispy.parse(code)
 
     for sexp in code['value']:

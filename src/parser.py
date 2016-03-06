@@ -24,8 +24,8 @@ class lispy_parser(object):
         'LET',
         'IF',
         'ID',
-        'PRINT'
-        # 'SQUOTE',
+        'PRINT',
+        'SQUOTE'
         # 'COMMENT'
     )
 
@@ -88,7 +88,7 @@ class lispy_parser(object):
             t.value = get_syn('ID', t.value)
         return t
 
-    # t_SQUOTE = r"'"
+    t_SQUOTE = r"'"
 
     # def t_COMMENT(self, t):
     #     r';[^\n]'
@@ -148,13 +148,13 @@ class lispy_parser(object):
             p[0] = get_syn('EXPRSEQ', [p[1]] + p[2]['value'])
 
     def p_list(self, p):
-        '''list : LPAREN exprseq RPAREN
-                | LPAREN RPAREN
+        '''list : SQUOTE LPAREN exprseq RPAREN
+                | SQUOTE LPAREN RPAREN
         '''
-        if len(p) == 3:
+        if len(p) == 4:
             p[0] = get_syn('LIST', list())
         else:
-            p[0] = get_syn('LIST', p[2]['value'])
+            p[0] = get_syn('LIST', p[3]['value'])
 
     def p_defun(self, p):
         '''defun : LPAREN DEFUN ID LPAREN ids RPAREN exprseq RPAREN
